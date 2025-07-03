@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expense Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- ✅ Dark Mode Toggle -->
+    <button id="toggle-theme">🌙 Toggle Dark Mode</button>
+
+    <h1>Expense Tracker</h1>
+
+    <form id="expense-form">
+      <input type="text" id="description" placeholder="Description" required />
+      <input type="number" id="amount" placeholder="Amount" required />
+      <select id="category">
+        <option value="food">Food</option>
+        <option value="transport">Transport</option>
+        <option value="bills">Bills</option>
+        <option value="others">Others</option>
+      </select>
+      <button type="submit">Add Expense</button>
+    </form>
+
+    <!-- ✅ Filter Dropdown -->
+    <label for="filter"><strong>Filter by Category:</strong></label>
+    <select id="filter">
+      <option value="all">All</option>
+      <option value="food">Food</option>
+      <option value="transport">Transport</option>
+      <option value="bills">Bills</option>
+      <option value="others">Others</option>
+    </select>
+
+    <h2>Expense List</h2>
+    <table id="expense-table">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Amount</th>
+          <th>Category</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="expense-list">
+        <!-- Expenses go here -->
+      </tbody>
+    </table>
+
+    <h3 id="total-display">Total: $0.00</h3>
+
+    <!-- ✅ Chart Container -->
+    <canvas id="expenseChart" width="400" height="200"></canvas>
+  </div>
+
+  <script src="index.js"></script>
+</body>
+</html>
