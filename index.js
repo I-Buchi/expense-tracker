@@ -1,3 +1,5 @@
+// Secure Expense Tracker JS
+
 // Select elements
 const expenseForm = document.getElementById("expense-form");
 const descriptionInput = document.getElementById("description");
@@ -10,58 +12,67 @@ const filterInput = document.getElementById("filter");
 const chartRangeInput = document.getElementById("chart-range");
 const themeToggle = document.getElementById("toggle-theme");
 
-let chart;
-let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+// Storage key
+const STORAGE_KEY = "expenses_secure";
 
-// 🔐 Sanitize input to prevent HTML/script injection
-const sanitizeInput = (text) => {
-  const temp = document.createElement("div");
-  temp.textContent = text;
-  return temp.innerHTML.substring(0, 100); // Max 100 characters
-};
+// Sanitize text input to prevent script injection
+function sanitize(input) {
+  const div = document.createElement("div");
+  div.textContent = input;
+  return div.innerHTML;
+}
+
+// Validate date string
+function isValidDate(dateString) {
+  const date = new Date(dateString);
+  return date instanceof Date && !isNaN(date);
+}
+
+// Load from localStorage
+let expenses = [];
+try {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) expenses = JSON.parse(stored);
+} catch (e) {
+  console.warn("Could not parse stored expenses:", e);
+}
 
 // Initial render
 renderFilteredExpenses();
 updateChart();
 
-// Submit form
-expenseForm.addEventListener("submit", function (e) {
+// Submit
+expenseForm.addEventListener("submit", (e) => {
   e.preventDefault();
 
-  const description = sanitizeInput(descriptionInput.value.trim());
-  const amount = parseFloat(amountInput.value).toFixed(2);
-  const selectedDropdown = categoryInput.value;
-  const customCategory = sanitizeInput(customCategoryInput.value.trim());
-  const date = document.querySelector('input[type="date"]').value;
-  const today = new Date().toISOString().slice(0, 10);
-
-  const finalCategory = customCategory !== "" ? customCategory : selectedDropdown;
+  const description = sanitize(descriptionInput.value.trim());
+  const amount = parseFloat(amountInput.value);
+  const selected = sanitize(categoryInput.value);
+  const custom = sanitize(customCategoryInput.value.trim());
+  const dateInput = document.querySelector('input[type="date"]').value;
+  const finalCategory = custom || selected;
+  const finalDate = isValidDate(dateInput)
+    ? dateInput
+    : new Date().toISOString().slice(0, 10);
 
   if (!description || isNaN(amount) || amount <= 0 || !finalCategory) {
     alert("Please enter valid data.");
     return;
   }
 
-  if (date > today) {
-    alert("You cannot set a future date.");
-    return;
-  }
-
-  if (expenses.length >= 500) {
-    alert("You’ve reached the maximum number of expenses allowed.");
-    return;
-  }
-
   const expense = {
     id: Date.now(),
     description,
-    amount,
+    amount: amount.toFixed(2),
     category: finalCategory,
-    date: date || today
+    date: finalDate,
   };
 
+  // Optional: Limit to 500 records
   expenses.push(expense);
-  localStorage.setItem("expenses", JSON.stringify(expenses));
+  if (expenses.length > 500) expenses.shift();
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
   renderFilteredExpenses();
   updateChart();
 
@@ -72,117 +83,107 @@ expenseForm.addEventListener("submit", function (e) {
   document.querySelector('input[type="date"]').value = "";
 });
 
-// Filter dropdown
+// Filter
 filterInput.addEventListener("change", renderFilteredExpenses);
 chartRangeInput.addEventListener("change", updateChart);
 
 // Render expenses
 function renderFilteredExpenses() {
   expenseList.innerHTML = "";
+  const selected = filterInput.value;
 
-  const selectedCategory = filterInput.value;
-  const filtered = selectedCategory === "all"
+  const filtered = selected === "all"
     ? expenses
-    : expenses.filter(exp => exp.category === selectedCategory);
+    : expenses.filter(exp => exp.category === selected);
 
   filtered.forEach(renderExpense);
   updateTotal(filtered);
 }
 
-// Render one expense row
-function renderExpense(expense) {
+// Render row
+function renderExpense(exp) {
   const row = document.createElement("tr");
-
   row.innerHTML = `
-    <td>${expense.description}</td>
-    <td>$${expense.amount}</td>
-    <td>${expense.category}</td>
-    <td>${expense.date || "N/A"}</td>
+    <td>${exp.description}</td>
+    <td>$${exp.amount}</td>
+    <td>${exp.category}</td>
+    <td>${exp.date}</td>
     <td><button class="delete-btn">Delete</button></td>
   `;
-
-  row.querySelector(".delete-btn").addEventListener("click", function () {
-    expenses = expenses.filter(item => item.id !== expense.id);
-    localStorage.setItem("expenses", JSON.stringify(expenses));
+  row.querySelector(".delete-btn").addEventListener("click", () => {
+    expenses = expenses.filter(item => item.id !== exp.id);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
     renderFilteredExpenses();
     updateChart();
   });
-
   expenseList.appendChild(row);
 }
 
-// Update total
+// Total
 function updateTotal(list = expenses) {
   const total = list.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
   totalDisplay.textContent = `Total: $${total.toFixed(2)}`;
 }
 
-// Update chart
+// Chart
 function updateChart() {
   const range = chartRangeInput.value;
-  const filteredExpenses = getExpensesByRange(range);
+  const filtered = getExpensesByRange(range);
 
   const categoryTotals = {};
-
-  filteredExpenses.forEach(exp => {
+  filtered.forEach(exp => {
     categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + parseFloat(exp.amount);
   });
 
   const labels = Object.keys(categoryTotals);
   const data = Object.values(categoryTotals);
 
-  if (chart) chart.destroy();
-
+  if (window.chart) window.chart.destroy();
   const ctx = document.getElementById("expenseChart").getContext("2d");
-  chart = new Chart(ctx, {
-    type: 'pie',
+
+  window.chart = new Chart(ctx, {
+    type: "pie",
     data: {
       labels,
       datasets: [{
         data,
-        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#8bc34a'],
-        borderColor: '#fff',
-        borderWidth: 2
-      }]
+        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#8bc34a', '#f39c12', '#9b59b6', '#e67e22'],
+        borderColor: "#fff",
+        borderWidth: 2,
+      }],
     },
     options: {
       responsive: true,
       plugins: {
-        legend: { position: 'bottom' }
-      }
-    }
+        legend: { position: "bottom" },
+      },
+    },
   });
 }
 
-// Get expenses by date range
+// Filter by date
 function getExpensesByRange(range) {
   const now = new Date();
   return expenses.filter(exp => {
-    if (!exp.date) return false;
-
     const expDate = new Date(exp.date);
     if (range === "daily") {
       return expDate.toDateString() === now.toDateString();
     } else if (range === "weekly") {
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - now.getDay());
-      return expDate >= startOfWeek && expDate <= now;
+      const start = new Date(now);
+      start.setDate(now.getDate() - now.getDay());
+      return expDate >= start && expDate <= now;
     } else if (range === "monthly") {
       return expDate.getMonth() === now.getMonth() && expDate.getFullYear() === now.getFullYear();
-    } else {
-      return true; // custom or all
     }
+    return true;
   });
 }
 
-// Dark mode toggle
+// Dark mode
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("dark-mode");
-  const isDark = document.body.classList.contains("dark-mode");
-  localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
+  localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
 });
-
-// Load dark mode
 window.addEventListener("DOMContentLoaded", () => {
   if (localStorage.getItem("darkMode") === "enabled") {
     document.body.classList.add("dark-mode");
