@@ -1,13 +1,19 @@
-// Select elements
 const expenseForm = document.getElementById("expense-form");
 const descriptionInput = document.getElementById("description");
 const amountInput = document.getElementById("amount");
-const dateInput = document.getElementById("date"); // ✅ NEW
 const categoryInput = document.getElementById("category");
-const customCategoryInput = document.getElementById("custom-category"); // ✅ NEW
+const customCategoryInput = document.getElementById("custom-category");
+const dateInput = document.getElementById("expense-date");
+
 const expenseList = document.getElementById("expense-list");
 const totalDisplay = document.getElementById("total-display");
 const filterInput = document.getElementById("filter");
+
+const chartRangeInput = document.getElementById("chart-range");
+const startDateInput = document.getElementById("start-date");
+const endDateInput = document.getElementById("end-date");
+const customRangeDiv = document.getElementById("custom-date-range");
+
 const themeToggle = document.getElementById("toggle-theme");
 
 let chart;
@@ -17,19 +23,19 @@ let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
 renderFilteredExpenses();
 updateChart();
 
-// Submit form
+// Handle form submit
 expenseForm.addEventListener("submit", function (e) {
   e.preventDefault();
 
   const description = descriptionInput.value.trim();
   const amount = parseFloat(amountInput.value).toFixed(2);
-  const selectedDropdown = categoryInput.value;
+  const dropdownCategory = categoryInput.value;
   const customCategory = customCategoryInput.value.trim();
-  const date = dateInput.value; // ✅ NEW
+  const date = dateInput.value || new Date().toISOString().slice(0, 10);
 
-  const finalCategory = customCategory !== "" ? customCategory : selectedDropdown;
+  const finalCategory = customCategory || dropdownCategory;
 
-  if (!description || isNaN(amount) || amount <= 0 || !finalCategory || !date) {
+  if (!description || isNaN(amount) || amount <= 0 || !finalCategory) {
     alert("Please enter valid data.");
     return;
   }
@@ -39,52 +45,62 @@ expenseForm.addEventListener("submit", function (e) {
     description,
     amount,
     category: finalCategory,
-    date, // ✅ NEW
+    date
   };
 
   expenses.push(expense);
   localStorage.setItem("expenses", JSON.stringify(expenses));
+
   renderFilteredExpenses();
   updateChart();
 
-  // Reset form fields
+  // Clear inputs
   descriptionInput.value = "";
   amountInput.value = "";
   categoryInput.value = "";
   customCategoryInput.value = "";
-  dateInput.value = ""; // ✅ Clear date
+  dateInput.value = "";
 });
 
-// Filter dropdown
+// Filter by category
 filterInput.addEventListener("change", renderFilteredExpenses);
 
-// Render filtered expenses
+// Chart range selector
+chartRangeInput.addEventListener("change", () => {
+  if (chartRangeInput.value === "custom") {
+    customRangeDiv.style.display = "block";
+  } else {
+    customRangeDiv.style.display = "none";
+  }
+  updateChart();
+});
+
+// Render expense list
 function renderFilteredExpenses() {
   expenseList.innerHTML = "";
+  const selected = filterInput.value;
 
-  const selectedCategory = filterInput.value;
-  const filtered = selectedCategory === "all"
+  const filtered = selected === "all"
     ? expenses
-    : expenses.filter(exp => exp.category === selectedCategory);
+    : expenses.filter(exp => exp.category === selected);
 
   filtered.forEach(renderExpense);
   updateTotal(filtered);
 }
 
-// Render one expense
-function renderExpense(expense) {
+// Render single row
+function renderExpense(exp) {
   const row = document.createElement("tr");
-
   row.innerHTML = `
-    <td>${expense.description}</td>
-    <td>$${expense.amount}</td>
-    <td>${expense.category}</td>
-    <td>${expense.date || "N/A"}</td> <!-- ✅ Show date -->
+    <td>${exp.description}</td>
+    <td>$${exp.amount}</td>
+    <td>${exp.category}</td>
+    <td>${exp.date}</td>
     <td><button class="delete-btn">Delete</button></td>
   `;
 
   row.querySelector(".delete-btn").addEventListener("click", function () {
-    expenses = expenses.filter(item => item.id !== expense.id);
+    expenses = expenses.filter(e => e.id !== exp.id);
     localStorage.setItem("expenses", JSON.stringify(expenses));
     renderFilteredExpenses();
     updateChart();
@@ -93,22 +109,20 @@ function renderExpense(expense) {
   expenseList.appendChild(row);
 }
 
-// Update total
+// Total calculation
 function updateTotal(list = expenses) {
   const total = list.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
   totalDisplay.textContent = `Total: $${total.toFixed(2)}`;
 }
 
-// Chart.js update
+// Chart rendering
 function updateChart() {
-  const categoryTotals = {};
+  const range = chartRangeInput.value;
+  const filteredExpenses = getExpensesByRange(range);
 
-  expenses.forEach(exp => {
-    if (categoryTotals[exp.category]) {
-      categoryTotals[exp.category] += parseFloat(exp.amount);
-    } else {
-      categoryTotals[exp.category] = parseFloat(exp.amount);
-    }
+  const categoryTotals = {};
+  filteredExpenses.forEach(exp => {
+    categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + parseFloat(exp.amount);
   });
 
   const labels = Object.keys(categoryTotals);
@@ -123,7 +137,7 @@ function updateChart() {
       labels,
       datasets: [{
         data,
-        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#8bc34a'],
+        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#8bc34a', '#a56cc1', '#f77f00'],
         borderColor: '#fff',
         borderWidth: 2
       }]
@@ -137,14 +151,36 @@ function updateChart() {
   });
 }
 
-// 🌙 Toggle dark mode
+// Get expenses by range
+function getExpensesByRange(range) {
+  const now = new Date();
+  return expenses.filter(exp => {
+    const expDate = new Date(exp.date);
+    if (range === "daily") {
+      return expDate.toDateString() === now.toDateString();
+    } else if (range === "weekly") {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      return expDate >= startOfWeek && expDate <= now;
+    } else if (range === "monthly") {
+      return expDate.getMonth() === now.getMonth() && expDate.getFullYear() === now.getFullYear();
+    } else if (range === "custom") {
+      const start = new Date(startDateInput.value);
+      const end = new Date(endDateInput.value);
+      return expDate >= start && expDate <= end;
+    } else {
+      return true;
+    }
+  });
+}
+
+// Dark mode
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("dark-mode");
   const isDark = document.body.classList.contains("dark-mode");
   localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
 });
 
-// ✅ Load dark mode if saved
 window.addEventListener("DOMContentLoaded", () => {
   if (localStorage.getItem("darkMode") === "enabled") {
     document.body.classList.add("dark-mode");
