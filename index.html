@@ -4,23 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Expense Tracker</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container">
-    
-    <!-- 🌙 Dark Mode Toggle -->
-    <button id="toggle-dark-mode">🌙 Toggle Dark Mode</button>
+    <!-- Dark Mode Toggle -->
+    <button id="toggle-theme">🌙 Toggle Dark Mode</button>
 
-    <!-- Heading -->
     <h1>Expense Tracker</h1>
 
-    <!-- 🚀 Expense Entry Form -->
+    <!-- Expense Form -->
     <form id="expense-form">
       <input type="text" id="description" placeholder="Description" required />
       <input type="number" id="amount" placeholder="Amount" required />
-      <input type="date" id="expense-date" required />
+      <input type="date" id="date" />
+
+      <!-- Category Dropdown -->
       <select id="category" required>
         <option value="" disabled selected>Select Category</option>
         <option value="food">Food</option>
@@ -35,13 +35,16 @@
         <option value="water">Water</option>
         <option value="others">Others</option>
       </select>
+
+      <!-- Custom Category -->
       <input type="text" id="custom-category" placeholder="Or enter custom category" />
+
       <button type="submit">Add Expense</button>
     </form>
 
-    <!-- 🧭 Controls -->
-    <div class="controls">
-      <label for="filter">Filter by Category:</label>
+    <!-- Filters -->
+    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+      <label for="filter"><strong>Filter by Category:</strong></label>
       <select id="filter">
         <option value="all">All</option>
         <option value="food">Food</option>
@@ -57,18 +60,18 @@
         <option value="others">Others</option>
       </select>
 
-      <label for="chart-range">Chart Range:</label>
+      <label for="chart-range"><strong>Chart Range:</strong></label>
       <select id="chart-range">
         <option value="daily">Daily</option>
         <option value="weekly">Weekly</option>
         <option value="monthly">Monthly</option>
-        <option value="custom">Custom</option>
+        <option value="all">All</option>
       </select>
     </div>
 
-    <!-- 📊 Expense Table -->
+    <!-- Expense Table -->
     <h2>Expense List</h2>
-    <table>
+    <table id="expense-table">
       <thead>
         <tr>
           <th>Description</th>
@@ -79,16 +82,15 @@
         </tr>
       </thead>
       <tbody id="expense-list">
-        <!-- JS will insert rows here -->
+        <!-- Rows will be added by JS -->
       </tbody>
     </table>
 
-    <!-- 💵 Total Display -->
+    <!-- Total Display -->
     <h3 id="total-display">Total: $0.00</h3>
 
-    <!-- 🧁 Chart -->
-    <canvas id="expenseChart" width="600" height="400"></canvas>
-
+    <!-- Chart -->
+    <canvas id="expenseChart" width="400" height="300"></canvas>
   </div>
 
   <script src="index.js"></script>

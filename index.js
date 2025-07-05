@@ -1,8 +1,7 @@
-// ✅ Select elements
+// Select elements
 const expenseForm = document.getElementById("expense-form");
 const descriptionInput = document.getElementById("description");
 const amountInput = document.getElementById("amount");
-const dateInput = document.getElementById("date");
 const categoryInput = document.getElementById("category");
 const customCategoryInput = document.getElementById("custom-category");
 const expenseList = document.getElementById("expense-list");
@@ -14,26 +13,19 @@ const themeToggle = document.getElementById("toggle-theme");
 let chart;
 let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
 
-// ✅ Initial render
+// Initial render
 renderFilteredExpenses();
 updateChart();
 
-// ✅ Sanitize helper
-function sanitize(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-// ✅ Handle form submission
+// Form submission
 expenseForm.addEventListener("submit", function (e) {
   e.preventDefault();
 
-  const description = sanitize(descriptionInput.value.trim());
+  const description = descriptionInput.value.trim();
   const amount = parseFloat(amountInput.value).toFixed(2);
-  const date = dateInput.value || new Date().toISOString().split("T")[0];
   const selectedDropdown = categoryInput.value;
-  const customCategory = sanitize(customCategoryInput.value.trim());
+  const customCategory = customCategoryInput.value.trim();
+  const date = document.querySelector('input[type="date"]').value;
 
   const finalCategory = customCategory !== "" ? customCategory : selectedDropdown;
 
@@ -47,7 +39,7 @@ expenseForm.addEventListener("submit", function (e) {
     description,
     amount,
     category: finalCategory,
-    date
+    date: date || new Date().toISOString().slice(0, 10)
   };
 
   expenses.push(expense);
@@ -55,17 +47,18 @@ expenseForm.addEventListener("submit", function (e) {
   renderFilteredExpenses();
   updateChart();
 
-  // ✅ Reset form
-  expenseForm.reset();
+  descriptionInput.value = "";
+  amountInput.value = "";
+  categoryInput.value = "";
+  customCategoryInput.value = "";
+  document.querySelector('input[type="date"]').value = "";
 });
 
-// ✅ Filter by dropdown category
+// Filter dropdown
 filterInput.addEventListener("change", renderFilteredExpenses);
-
-// ✅ Filter chart range
 chartRangeInput.addEventListener("change", updateChart);
 
-// ✅ Render filtered expenses
+// Render expenses
 function renderFilteredExpenses() {
   expenseList.innerHTML = "";
 
@@ -78,7 +71,7 @@ function renderFilteredExpenses() {
   updateTotal(filtered);
 }
 
-// ✅ Render one row
+// Render row
 function renderExpense(expense) {
   const row = document.createElement("tr");
 
@@ -100,13 +93,13 @@ function renderExpense(expense) {
   expenseList.appendChild(row);
 }
 
-// ✅ Update total amount
+// Total display
 function updateTotal(list = expenses) {
   const total = list.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
   totalDisplay.textContent = `Total: $${total.toFixed(2)}`;
 }
 
-// ✅ Update Chart
+// Chart update
 function updateChart() {
   const range = chartRangeInput.value;
   const filteredExpenses = getExpensesByRange(range);
@@ -129,7 +122,7 @@ function updateChart() {
       labels,
       datasets: [{
         data,
-        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#8bc34a'],
+        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#8bc34a', '#4caf50', '#9c27b0'],
         borderColor: '#fff',
         borderWidth: 2
       }]
@@ -143,7 +136,7 @@ function updateChart() {
   });
 }
 
-// ✅ Get expenses by selected range
+// Get expenses by date range
 function getExpensesByRange(range) {
   const now = new Date();
   return expenses.filter(exp => {
@@ -159,19 +152,18 @@ function getExpensesByRange(range) {
     } else if (range === "monthly") {
       return expDate.getMonth() === now.getMonth() && expDate.getFullYear() === now.getFullYear();
     } else {
-      return true; // all
+      return true;
     }
   });
 }
 
-// ✅ Dark Mode Toggle
+// Dark mode toggle
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("dark-mode");
   const isDark = document.body.classList.contains("dark-mode");
   localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
 });
 
-// ✅ Load saved theme
 window.addEventListener("DOMContentLoaded", () => {
   if (localStorage.getItem("darkMode") === "enabled") {
     document.body.classList.add("dark-mode");
