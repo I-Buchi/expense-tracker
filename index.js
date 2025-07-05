@@ -3,6 +3,7 @@ const expenseForm = document.getElementById("expense-form");
 const descriptionInput = document.getElementById("description");
 const amountInput = document.getElementById("amount");
 const categoryInput = document.getElementById("category");
+const customCategoryInput = document.getElementById("custom-category"); // ✅ NEW
 const expenseList = document.getElementById("expense-list");
 const totalDisplay = document.getElementById("total-display");
 const filterInput = document.getElementById("filter");
@@ -21,9 +22,12 @@ expenseForm.addEventListener("submit", function (e) {
 
   const description = descriptionInput.value.trim();
   const amount = parseFloat(amountInput.value).toFixed(2);
-  const category = categoryInput.value;
+  const selectedDropdown = categoryInput.value;
+  const customCategory = customCategoryInput.value.trim();
 
-  if (!description || isNaN(amount) || amount <= 0) {
+  const finalCategory = customCategory !== "" ? customCategory : selectedDropdown; // ✅ Use custom if available
+
+  if (!description || isNaN(amount) || amount <= 0 || !finalCategory) {
     alert("Please enter valid data.");
     return;
   }
@@ -32,7 +36,7 @@ expenseForm.addEventListener("submit", function (e) {
     id: Date.now(),
     description,
     amount,
-    category,
+    category: finalCategory,
   };
 
   expenses.push(expense);
@@ -40,9 +44,11 @@ expenseForm.addEventListener("submit", function (e) {
   renderFilteredExpenses();
   updateChart();
 
+  // Reset form fields
   descriptionInput.value = "";
   amountInput.value = "";
-  categoryInput.value = "food";
+  categoryInput.value = "";
+  customCategoryInput.value = ""; // ✅ Clear custom input
 });
 
 // Filter dropdown
