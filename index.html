@@ -17,12 +17,16 @@
     <form id="expense-form">
       <input type="text" id="description" placeholder="Description" required />
       <input type="number" id="amount" placeholder="Amount" required />
-      <select id="category">
+
+      <!-- ✅ Updated Dropdown with Placeholder -->
+      <select id="category" required>
+        <option value="" disabled selected>Select Category</option>
         <option value="food">Food</option>
         <option value="transport">Transport</option>
         <option value="bills">Bills</option>
         <option value="others">Others</option>
       </select>
+
       <button type="submit">Add Expense</button>
     </form>
 
