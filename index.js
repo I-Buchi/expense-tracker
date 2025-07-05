@@ -9,13 +9,11 @@ const totalDisplay = document.getElementById("total-display");
 const filterInput = document.getElementById("filter");
 const chartRangeInput = document.getElementById("chart-range");
 const themeToggle = document.getElementById("toggle-theme");
+const startDateInput = document.getElementById("start-date");
+const endDateInput = document.getElementById("end-date");
 
 let chart;
 let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
-
-// Initial render
-renderFilteredExpenses();
-updateChart();
 
 // Form submission
 expenseForm.addEventListener("submit", function (e) {
@@ -39,7 +37,7 @@ expenseForm.addEventListener("submit", function (e) {
     description,
     amount,
     category: finalCategory,
-    date: date || new Date().toISOString().slice(0, 10)
+    date: date || new Date().toISOString().slice(0, 10),
   };
 
   expenses.push(expense);
@@ -56,9 +54,20 @@ expenseForm.addEventListener("submit", function (e) {
 
 // Filter dropdown
 filterInput.addEventListener("change", renderFilteredExpenses);
-chartRangeInput.addEventListener("change", updateChart);
 
-// Render expenses
+// Chart range filter
+chartRangeInput.addEventListener("change", () => {
+  const showCustom = chartRangeInput.value === "custom";
+  document.getElementById("custom-range").style.display = showCustom ? "block" : "none";
+  updateChart();
+});
+
+// Custom range input change
+[startDateInput, endDateInput].forEach(input => {
+  input.addEventListener("change", updateChart);
+});
+
+// Render expense table
 function renderFilteredExpenses() {
   expenseList.innerHTML = "";
 
@@ -71,7 +80,7 @@ function renderFilteredExpenses() {
   updateTotal(filtered);
 }
 
-// Render row
+// Render one row
 function renderExpense(expense) {
   const row = document.createElement("tr");
 
@@ -93,13 +102,13 @@ function renderExpense(expense) {
   expenseList.appendChild(row);
 }
 
-// Total display
+// Total amount
 function updateTotal(list = expenses) {
   const total = list.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
   totalDisplay.textContent = `Total: $${total.toFixed(2)}`;
 }
 
-// Chart update
+// Chart update logic
 function updateChart() {
   const range = chartRangeInput.value;
   const filteredExpenses = getExpensesByRange(range);
@@ -107,7 +116,8 @@ function updateChart() {
   const categoryTotals = {};
 
   filteredExpenses.forEach(exp => {
-    categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + parseFloat(exp.amount);
+    const cat = exp.category || "Others";
+    categoryTotals[cat] = (categoryTotals[cat] || 0) + parseFloat(exp.amount);
   });
 
   const labels = Object.keys(categoryTotals);
@@ -117,32 +127,37 @@ function updateChart() {
 
   const ctx = document.getElementById("expenseChart").getContext("2d");
   chart = new Chart(ctx, {
-    type: 'pie',
+    type: "pie",
     data: {
       labels,
       datasets: [{
         data,
-        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#8bc34a', '#4caf50', '#9c27b0'],
-        borderColor: '#fff',
-        borderWidth: 2
+        backgroundColor: [
+          '#ff6384', '#36a2eb', '#ffce56', '#8bc34a',
+          '#f06292', '#4dd0e1', '#ffd54f', '#a1887f'
+        ],
+        borderColor: "#fff",
+        borderWidth: 2,
       }]
     },
     options: {
       responsive: true,
       plugins: {
-        legend: { position: 'bottom' }
+        legend: { position: "bottom" }
       }
     }
   });
 }
 
-// Get expenses by date range
+// Get expenses by time range
 function getExpensesByRange(range) {
   const now = new Date();
+
   return expenses.filter(exp => {
     if (!exp.date) return false;
 
     const expDate = new Date(exp.date);
+
     if (range === "daily") {
       return expDate.toDateString() === now.toDateString();
     } else if (range === "weekly") {
@@ -151,9 +166,14 @@ function getExpensesByRange(range) {
       return expDate >= startOfWeek && expDate <= now;
     } else if (range === "monthly") {
       return expDate.getMonth() === now.getMonth() && expDate.getFullYear() === now.getFullYear();
-    } else {
-      return true;
+    } else if (range === "custom") {
+      const start = new Date(startDateInput.value);
+      const end = new Date(endDateInput.value);
+      if (!start || !end || isNaN(start) || isNaN(end)) return false;
+      return expDate >= start && expDate <= end;
     }
+
+    return true;
   });
 }
 
@@ -164,8 +184,12 @@ themeToggle.addEventListener("click", () => {
   localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
 });
 
+// Load page
 window.addEventListener("DOMContentLoaded", () => {
   if (localStorage.getItem("darkMode") === "enabled") {
     document.body.classList.add("dark-mode");
   }
+
+  renderFilteredExpenses();
+  updateChart();
 });
