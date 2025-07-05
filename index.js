@@ -1,55 +1,44 @@
-// Select DOM Elements
+// ✅ Select elements
+const expenseForm = document.getElementById("expense-form");
 const descriptionInput = document.getElementById("description");
 const amountInput = document.getElementById("amount");
 const dateInput = document.getElementById("date");
-const categorySelect = document.getElementById("category");
+const categoryInput = document.getElementById("category");
 const customCategoryInput = document.getElementById("custom-category");
-const addExpenseBtn = document.getElementById("add-expense");
 const expenseList = document.getElementById("expense-list");
-const totalDisplay = document.getElementById("total");
-const filterCategory = document.getElementById("filter-category");
-const chartRange = document.getElementById("chart-range");
-const themeToggle = document.getElementById("toggle-dark-mode");
-const chartCanvas = document.getElementById("expenseChart");
+const totalDisplay = document.getElementById("total-display");
+const filterInput = document.getElementById("filter");
+const chartRangeInput = document.getElementById("chart-range");
+const themeToggle = document.getElementById("toggle-theme");
 
+let chart;
 let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
-let chart = null;
 
-// Helper: Sanitize input
-function sanitize(input) {
+// ✅ Initial render
+renderFilteredExpenses();
+updateChart();
+
+// ✅ Sanitize helper
+function sanitize(str) {
   const div = document.createElement("div");
-  div.textContent = input;
+  div.textContent = str;
   return div.innerHTML;
 }
 
-// Load dark mode
-window.addEventListener("DOMContentLoaded", () => {
-  if (localStorage.getItem("darkMode") === "enabled") {
-    document.body.classList.add("dark-mode");
-  }
-  renderExpenses();
-  updateChart();
-});
+// ✅ Handle form submission
+expenseForm.addEventListener("submit", function (e) {
+  e.preventDefault();
 
-// Dark mode toggle
-themeToggle.addEventListener("click", () => {
-  document.body.classList.toggle("dark-mode");
-  const isDark = document.body.classList.contains("dark-mode");
-  localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
-});
-
-// Add expense
-addExpenseBtn.addEventListener("click", () => {
   const description = sanitize(descriptionInput.value.trim());
-  const amount = parseFloat(amountInput.value);
+  const amount = parseFloat(amountInput.value).toFixed(2);
   const date = dateInput.value || new Date().toISOString().split("T")[0];
-  const selected = categorySelect.value;
-  const custom = sanitize(customCategoryInput.value.trim());
+  const selectedDropdown = categoryInput.value;
+  const customCategory = sanitize(customCategoryInput.value.trim());
 
-  const category = custom || selected;
+  const finalCategory = customCategory !== "" ? customCategory : selectedDropdown;
 
-  if (!description || isNaN(amount) || amount <= 0 || !category) {
-    alert("Please fill in all fields correctly.");
+  if (!description || isNaN(amount) || amount <= 0 || !finalCategory) {
+    alert("Please enter valid data.");
     return;
   }
 
@@ -57,99 +46,75 @@ addExpenseBtn.addEventListener("click", () => {
     id: Date.now(),
     description,
     amount,
-    category,
+    category: finalCategory,
     date
   };
 
   expenses.push(expense);
   localStorage.setItem("expenses", JSON.stringify(expenses));
-
-  descriptionInput.value = "";
-  amountInput.value = "";
-  dateInput.value = "";
-  categorySelect.value = "";
-  customCategoryInput.value = "";
-
-  renderExpenses();
+  renderFilteredExpenses();
   updateChart();
+
+  // ✅ Reset form
+  expenseForm.reset();
 });
 
-// Render expense rows
-function renderExpenses() {
-  const selectedCategory = filterCategory.value;
-  const filtered = selectedCategory === "All"
+// ✅ Filter by dropdown category
+filterInput.addEventListener("change", renderFilteredExpenses);
+
+// ✅ Filter chart range
+chartRangeInput.addEventListener("change", updateChart);
+
+// ✅ Render filtered expenses
+function renderFilteredExpenses() {
+  expenseList.innerHTML = "";
+
+  const selectedCategory = filterInput.value;
+  const filtered = selectedCategory === "all"
     ? expenses
     : expenses.filter(exp => exp.category === selectedCategory);
 
-  expenseList.innerHTML = "";
-
-  filtered.forEach(exp => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${exp.description}</td>
-      <td>$${exp.amount.toFixed(2)}</td>
-      <td>${exp.category}</td>
-      <td>${exp.date}</td>
-      <td><button data-id="${exp.id}" class="delete-btn">Delete</button></td>
-    `;
-
-    row.querySelector(".delete-btn").addEventListener("click", () => {
-      expenses = expenses.filter(e => e.id !== exp.id);
-      localStorage.setItem("expenses", JSON.stringify(expenses));
-      renderExpenses();
-      updateChart();
-    });
-
-    expenseList.appendChild(row);
-  });
-
+  filtered.forEach(renderExpense);
   updateTotal(filtered);
 }
 
-// Update total amount
-function updateTotal(list) {
-  const total = list.reduce((sum, exp) => sum + exp.amount, 0);
+// ✅ Render one row
+function renderExpense(expense) {
+  const row = document.createElement("tr");
+
+  row.innerHTML = `
+    <td>${expense.description}</td>
+    <td>$${expense.amount}</td>
+    <td>${expense.category}</td>
+    <td>${expense.date || "N/A"}</td>
+    <td><button class="delete-btn">Delete</button></td>
+  `;
+
+  row.querySelector(".delete-btn").addEventListener("click", function () {
+    expenses = expenses.filter(item => item.id !== expense.id);
+    localStorage.setItem("expenses", JSON.stringify(expenses));
+    renderFilteredExpenses();
+    updateChart();
+  });
+
+  expenseList.appendChild(row);
+}
+
+// ✅ Update total amount
+function updateTotal(list = expenses) {
+  const total = list.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
   totalDisplay.textContent = `Total: $${total.toFixed(2)}`;
 }
 
-// Filter list by category
-filterCategory.addEventListener("change", () => {
-  renderExpenses();
-});
-
-// Filter chart by range
-chartRange.addEventListener("change", updateChart);
-
-// Get filtered expenses by chart range
-function getExpensesByRange(range) {
-  const now = new Date();
-  return expenses.filter(exp => {
-    const expDate = new Date(exp.date);
-    switch (range) {
-      case "daily":
-        return expDate.toDateString() === now.toDateString();
-      case "weekly":
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - now.getDay());
-        return expDate >= startOfWeek && expDate <= now;
-      case "monthly":
-        return expDate.getMonth() === now.getMonth() &&
-               expDate.getFullYear() === now.getFullYear();
-      case "custom":
-      default:
-        return true;
-    }
-  });
-}
-
-// Update chart
+// ✅ Update Chart
 function updateChart() {
-  const range = chartRange.value;
-  const filtered = getExpensesByRange(range);
+  const range = chartRangeInput.value;
+  const filteredExpenses = getExpensesByRange(range);
 
   const categoryTotals = {};
-  filtered.forEach(exp => {
-    categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + exp.amount;
+
+  filteredExpenses.forEach(exp => {
+    categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + parseFloat(exp.amount);
   });
 
   const labels = Object.keys(categoryTotals);
@@ -157,30 +122,58 @@ function updateChart() {
 
   if (chart) chart.destroy();
 
-  const ctx = chartCanvas.getContext("2d");
+  const ctx = document.getElementById("expenseChart").getContext("2d");
   chart = new Chart(ctx, {
-    type: "pie",
+    type: 'pie',
     data: {
       labels,
       datasets: [{
-        label: "Expenses by Category",
         data,
-        backgroundColor: [
-          "#FF6384", "#36A2EB", "#FFCE56",
-          "#4CAF50", "#FF9800", "#9C27B0",
-          "#795548", "#607D8B", "#03A9F4", "#8BC34A"
-        ],
-        borderColor: "#fff",
-        borderWidth: 1
+        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#8bc34a'],
+        borderColor: '#fff',
+        borderWidth: 2
       }]
     },
     options: {
       responsive: true,
       plugins: {
-        legend: {
-          position: "bottom"
-        }
+        legend: { position: 'bottom' }
       }
     }
   });
 }
+
+// ✅ Get expenses by selected range
+function getExpensesByRange(range) {
+  const now = new Date();
+  return expenses.filter(exp => {
+    if (!exp.date) return false;
+
+    const expDate = new Date(exp.date);
+    if (range === "daily") {
+      return expDate.toDateString() === now.toDateString();
+    } else if (range === "weekly") {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      return expDate >= startOfWeek && expDate <= now;
+    } else if (range === "monthly") {
+      return expDate.getMonth() === now.getMonth() && expDate.getFullYear() === now.getFullYear();
+    } else {
+      return true; // all
+    }
+  });
+}
+
+// ✅ Dark Mode Toggle
+themeToggle.addEventListener("click", () => {
+  document.body.classList.toggle("dark-mode");
+  const isDark = document.body.classList.contains("dark-mode");
+  localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
+});
+
+// ✅ Load saved theme
+window.addEventListener("DOMContentLoaded", () => {
+  if (localStorage.getItem("darkMode") === "enabled") {
+    document.body.classList.add("dark-mode");
+  }
+});
