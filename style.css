@@ -2,31 +2,26 @@
 body {
   font-family: Arial, sans-serif;
   background-color: #f4f6f8;
+  margin: 0;
+  padding: 20px;
   display: flex;
   justify-content: center;
-  padding: 30px;
-  margin: 0;
 }
 
 .container {
   background-color: #fff;
-  padding: 20px 30px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  max-width: 1000px;
   width: 100%;
-  max-width: 600px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-h1, h2, h3 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #333;
-}
-
+/* Form Section */
 form {
   display: flex;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
@@ -35,43 +30,72 @@ form select,
 form button {
   padding: 10px;
   font-size: 16px;
-  border: 1px solid #ccc;
   border-radius: 5px;
+  border: 1px solid #ccc;
   flex: 1;
-  min-width: 120px;
+  min-width: 150px;
 }
 
 form button {
   background-color: #007bff;
   color: white;
   border: none;
+  flex: 0 0 auto;
   cursor: pointer;
-  flex: 0 0 100px;
 }
 
 form button:hover {
   background-color: #0056b3;
 }
 
-#toggle-theme {
-  margin-bottom: 10px;
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 5px;
-  background-color: #ddd;
-  border: none;
+/* Header and Toggles */
+h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 20px;
 }
 
+#toggle-dark-mode {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border: none;
+  background-color: #ddd;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Filters and Totals */
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.controls label {
+  font-weight: bold;
+}
+
+#filter-category,
+#chart-range {
+  padding: 8px;
+  font-size: 14px;
+  border-radius: 5px;
+}
+
+/* Expense Table */
 table {
   width: 100%;
   border-collapse: collapse;
+  margin-bottom: 20px;
 }
 
 th, td {
   padding: 10px;
-  text-align: left;
   border-bottom: 1px solid #ddd;
+  text-align: left;
 }
 
 th {
@@ -80,18 +104,32 @@ th {
 
 td button {
   background-color: #dc3545;
-  color: white;
-  border: none;
+  color: #fff;
   padding: 5px 10px;
+  border: none;
   border-radius: 3px;
   cursor: pointer;
 }
 
 td button:hover {
-  background-color: #c82333;
+  background-color: #b02a37;
 }
 
-/* 🌙 Dark mode styles */
+#total {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: right;
+  margin-bottom: 10px;
+}
+
+/* Chart */
+canvas {
+  display: block;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* 🌙 Dark Mode Styles */
 body.dark-mode {
   background-color: #121212;
   color: #f0f0f0;
@@ -110,22 +148,12 @@ body.dark-mode button {
   border: 1px solid #555;
 }
 
-body.dark-mode table th,
-body.dark-mode table td {
-  border-color: #444;
+body.dark-mode th,
+body.dark-mode td {
+  border-color: #555;
 }
 
-body.dark-mode #toggle-theme {
-  background-color: #444;
+body.dark-mode #toggle-dark-mode {
+  background-color: #333;
   color: #fff;
-  border: none;
-}
-
-/* ✅ Pie Chart Styling */
-#expenseChart {
-  display: block;
-  margin: 20px auto;
-  max-width: 320px;
-  width: 100%;
-  height: auto;
 }
