@@ -2,6 +2,7 @@
 const expenseForm = document.getElementById("expense-form");
 const descriptionInput = document.getElementById("description");
 const amountInput = document.getElementById("amount");
+const dateInput = document.getElementById("date"); // ✅ NEW
 const categoryInput = document.getElementById("category");
 const customCategoryInput = document.getElementById("custom-category"); // ✅ NEW
 const expenseList = document.getElementById("expense-list");
@@ -24,10 +25,11 @@ expenseForm.addEventListener("submit", function (e) {
   const amount = parseFloat(amountInput.value).toFixed(2);
   const selectedDropdown = categoryInput.value;
   const customCategory = customCategoryInput.value.trim();
+  const date = dateInput.value; // ✅ NEW
 
-  const finalCategory = customCategory !== "" ? customCategory : selectedDropdown; // ✅ Use custom if available
+  const finalCategory = customCategory !== "" ? customCategory : selectedDropdown;
 
-  if (!description || isNaN(amount) || amount <= 0 || !finalCategory) {
+  if (!description || isNaN(amount) || amount <= 0 || !finalCategory || !date) {
     alert("Please enter valid data.");
     return;
   }
@@ -37,6 +39,7 @@ expenseForm.addEventListener("submit", function (e) {
     description,
     amount,
     category: finalCategory,
+    date, // ✅ NEW
   };
 
   expenses.push(expense);
@@ -48,7 +51,8 @@ expenseForm.addEventListener("submit", function (e) {
   descriptionInput.value = "";
   amountInput.value = "";
   categoryInput.value = "";
-  customCategoryInput.value = ""; // ✅ Clear custom input
+  customCategoryInput.value = "";
+  dateInput.value = ""; // ✅ Clear date
 });
 
 // Filter dropdown
@@ -75,6 +79,7 @@ function renderExpense(expense) {
     <td>${expense.description}</td>
     <td>$${expense.amount}</td>
     <td>${expense.category}</td>
+    <td>${expense.date || "N/A"}</td> <!-- ✅ Show date -->
     <td><button class="delete-btn">Delete</button></td>
   `;
 
