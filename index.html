@@ -19,8 +19,6 @@
       <input type="text" id="description" placeholder="Description" required />
       <input type="number" id="amount" placeholder="Amount" required />
       <input type="date" id="date" />
-
-      <!-- Category Dropdown -->
       <select id="category" required>
         <option value="" disabled selected>Select Category</option>
         <option value="food">Food</option>
@@ -35,15 +33,12 @@
         <option value="water">Water</option>
         <option value="others">Others</option>
       </select>
-
-      <!-- Custom Category -->
       <input type="text" id="custom-category" placeholder="Or enter custom category" />
-
       <button type="submit">Add Expense</button>
     </form>
 
     <!-- Filters -->
-    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+    <div class="controls">
       <label for="filter"><strong>Filter by Category:</strong></label>
       <select id="filter">
         <option value="all">All</option>
@@ -59,14 +54,6 @@
         <option value="water">Water</option>
         <option value="others">Others</option>
       </select>
-
-      <label for="chart-range"><strong>Chart Range:</strong></label>
-      <select id="chart-range">
-        <option value="daily">Daily</option>
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
-        <option value="all">All</option>
-      </select>
     </div>
 
     <!-- Expense Table -->
@@ -81,13 +68,20 @@
           <th>Action</th>
         </tr>
       </thead>
-      <tbody id="expense-list">
-        <!-- Rows will be added by JS -->
-      </tbody>
+      <tbody id="expense-list"></tbody>
     </table>
 
     <!-- Total Display -->
     <h3 id="total-display">Total: $0.00</h3>
+
+    <!-- Chart Range -->
+    <label for="chart-range"><strong>Chart Range:</strong></label>
+    <select id="chart-range">
+      <option value="daily">Today</option>
+      <option value="weekly">Weekly</option>
+      <option value="monthly">Monthly</option>
+      <option value="all">All</option>
+    </select>
 
     <!-- Chart -->
     <canvas id="expenseChart" width="400" height="300"></canvas>
