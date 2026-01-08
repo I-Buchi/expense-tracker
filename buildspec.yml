@@ -1,0 +1,29 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions: 
+      nodejs: 18
+    commands:
+      - echo "Installing dependencies..."
+      - npm install
+  
+  pre_build:
+    commands: 
+      - echo "Pre-build phase started..."
+      - echo "Build started on `date`"
+  
+  build:
+    commands:
+      - echo "Building the application..."
+      - echo "No compilation needed for this app"
+  
+  post_build:
+    commands:
+      - echo "Build completed on `date`"
+      - echo "Preparing deployment package..."
+
+artifacts:
+  files:
+    - '**/*'
+  name: expense-tracker-build-artifact

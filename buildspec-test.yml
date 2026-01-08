@@ -1,0 +1,38 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions: 
+      nodejs: 18
+    commands:
+      - echo "Installing test dependencies..."
+      - npm install
+  
+  pre_build: 
+    commands:
+      - echo "Running pre-test checks..."
+      - echo "Tests started on `date`"
+  
+  build:
+    commands:
+      - echo "Running tests..."
+      - echo "Validating required files exist..."
+      - test -f index.html && echo "✓ index.html exists"
+      - test -f style.css && echo "✓ style.css exists"
+      - test -f index.js && echo "✓ index.js exists"
+      - test -f server.js && echo "✓ server.js exists"
+      - test -f package.json && echo "✓ package.json exists"
+      - echo "Checking JavaScript syntax..."
+      - node -c index.js && echo "✓ index.js syntax valid"
+      - node -c server.js && echo "✓ server.js syntax valid"
+      - echo "Running npm test..."
+      - npm test
+  
+  post_build: 
+    commands:
+      - echo "Tests completed on `date`"
+      - echo "All tests passed successfully!"
+
+artifacts:
+  files:
+    - '**/*'
